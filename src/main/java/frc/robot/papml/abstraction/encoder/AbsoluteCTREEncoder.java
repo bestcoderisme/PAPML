@@ -1,4 +1,4 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.encoder;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 

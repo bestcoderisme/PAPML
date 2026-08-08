@@ -1,4 +1,4 @@
-package frc.robot.motors;
+package frc.robot.papml;
 
 
 import java.util.function.BooleanSupplier;
@@ -14,7 +14,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.motors.FFCharacterizationSamples.GravityMode;
+import frc.robot.papml.FFCharacterizationSamples.GravityMode;
+import frc.robot.papml.abstraction.motor.Motor;
 
 public class NoGravityVelocitySubsystem extends SmartSubsystem {
     private SimpleMotorFeedforward feedforward;

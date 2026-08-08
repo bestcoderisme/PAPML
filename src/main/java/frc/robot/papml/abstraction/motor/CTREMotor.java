@@ -1,4 +1,4 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.motor;
 
 import com.ctre.phoenix6.configs.ClosedLoopRampsConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -13,6 +13,9 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import frc.robot.papml.abstraction.encoder.Encoder;
+import frc.robot.papml.abstraction.encoder.RelativeCTREEncoder;
 
 /**
  * {@link Motor} implementation backed by a Phoenix 6 {@link TalonFX}.

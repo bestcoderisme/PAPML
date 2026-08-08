@@ -1,4 +1,4 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.encoder;
 
 /**
  * Common abstraction for rotary encoder feedback used by motor wrappers.

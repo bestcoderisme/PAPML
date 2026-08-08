@@ -1,9 +1,9 @@
-package frc.robot.motors;
+package frc.robot.papml;
 
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
-import frc.robot.motors.FFCharacterizationSamples.FFCharacterizationSample;
-import frc.robot.motors.FFCharacterizationSamples.GravityMode;
+import frc.robot.papml.FFCharacterizationSamples.FFCharacterizationSample;
+import frc.robot.papml.FFCharacterizationSamples.GravityMode;
 //add min_velocity and sample size check later
 public class FFRegression {
 

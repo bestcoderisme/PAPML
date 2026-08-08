@@ -1,10 +1,11 @@
-package frc.robot.motors;
+package frc.robot.papml;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.papml.abstraction.motor.Motor;
 
 public abstract class SmartSubsystem extends SubsystemBase{
     protected Motor motor;

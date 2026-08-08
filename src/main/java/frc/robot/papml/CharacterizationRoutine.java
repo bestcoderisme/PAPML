@@ -1,10 +1,11 @@
-package frc.robot.motors;
+package frc.robot.papml;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.papml.abstraction.motor.Motor;
 
 public class CharacterizationRoutine {
     private FFCharacterizationSamples samples;

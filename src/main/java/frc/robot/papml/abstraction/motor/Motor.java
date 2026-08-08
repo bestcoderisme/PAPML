@@ -1,4 +1,6 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.motor;
+
+import frc.robot.papml.abstraction.encoder.Encoder;
 
 /**
  * Common abstraction for motor controller wrappers.

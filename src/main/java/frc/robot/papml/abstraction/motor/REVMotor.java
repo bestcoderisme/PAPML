@@ -1,4 +1,4 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.motor;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
@@ -10,6 +10,9 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import frc.robot.papml.abstraction.encoder.Encoder;
+import frc.robot.papml.abstraction.encoder.RelativeREVEncoder;
 
 /**
  * {@link Motor} implementation backed by a REV {@link SparkBase}.

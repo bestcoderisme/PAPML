@@ -1,7 +1,6 @@
-package frc.robot.motors;
+package frc.robot.papml.abstraction.encoder;
 
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkAbsoluteEncoder;
 
 /**
  * Encoder wrapper around a REV {@link RelativeEncoder}.
@@ -9,15 +8,15 @@ import com.revrobotics.spark.SparkAbsoluteEncoder;
  * <p>The REV relative encoder reports position in rotations and velocity in RPM by default, so
  * this wrapper exposes those units directly.
  */
-public class AbsoluteREVEncoder implements Encoder {
-    private final SparkAbsoluteEncoder encoder;
+public class RelativeREVEncoder implements Encoder {
+    private final RelativeEncoder encoder;
 
     /**
      * Creates an encoder wrapper for the primary encoder on a SPARK controller.
      *
      * @param motor SPARK controller providing the encoder
      */
-    public AbsoluteREVEncoder(SparkAbsoluteEncoder encoder) {
+    public RelativeREVEncoder(RelativeEncoder encoder) {
         this.encoder = encoder;
     }
 
@@ -34,6 +33,7 @@ public class AbsoluteREVEncoder implements Encoder {
      */
     @Override
     public double getVelocity() {
+        
         return encoder.getVelocity();
     }
 
@@ -42,7 +42,7 @@ public class AbsoluteREVEncoder implements Encoder {
      */
     @Override
     public void setPosition(double position) {
-        // encoder.
+        encoder.setPosition(position);
     }
 
     /**
@@ -57,7 +57,7 @@ public class AbsoluteREVEncoder implements Encoder {
      * {@inheritDoc}
      */
     @Override
-    public SparkAbsoluteEncoder getRawEncoder() {
+    public RelativeEncoder getRawEncoder() {
         return encoder;
     }
 }

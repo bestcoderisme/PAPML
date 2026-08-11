@@ -104,6 +104,7 @@ public class SearchAlgorithm {
             System.out.println(subsystem.getName() + " " + itemBeingCharacterized + " Optimal Value: " + getMidpoint());
             SmartDashboard.putNumber(subsystem.getName() + "/AutoTune/" + itemBeingCharacterized + "/Current Estimate", getMidpoint());
             Preferences.setDouble(subsystem.getName() + "/AutoTune/" + itemBeingCharacterized + "/Current Estimate", getMidpoint());
+            reset();
         }, subsystem);
     }
 

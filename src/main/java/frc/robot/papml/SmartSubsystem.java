@@ -11,7 +11,7 @@ public abstract class SmartSubsystem extends SubsystemBase{
     protected Motor motor;
     protected PIDController pid;
     protected String name;
-    protected Timer timer;
+    protected Timer timer = new Timer();
     protected FFRegression regressor;
     protected FFCharacterizationSamples samples;
 

@@ -18,6 +18,12 @@ import frc.robot.papml.FFCharacterizationSamples.GravityMode;
 import frc.robot.papml.abstraction.motor.Motor;
 
 public class NoGravityVelocitySubsystem extends SmartSubsystem {
+    public enum ControlMode {
+        DISABLED,
+        CALIBRATION,
+        NORMAL
+    }
+
     private SimpleMotorFeedforward feedforward;
     private double targetRPM;
     private CharacterizationRoutine routine;
@@ -26,6 +32,8 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     private Debouncer debouncer;
     private double lastTime=Double.POSITIVE_INFINITY;
     private double currentTime;
+    private ControlMode mode;
+
     
     public NoGravityVelocitySubsystem(String name, Motor motor, CharacterizationConstraints constraints) {
         samples = new FFCharacterizationSamples(GravityMode.NONE);
@@ -37,6 +45,8 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         this.routine = new CharacterizationRoutine(samples, constraints, motor);
 
         this.debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
+
+        this.mode = ControlMode.NORMAL;
 
         searchAlgorithmForkP = createSearchAlgorithm((double constant) -> {
             pid.setP(constant);
@@ -54,9 +64,13 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         // SmartDashboard.putNumber(name+" subsystem targetRPM", targetRPM);
     }
 
+    public void disableSubsystem(){
+        mode = ControlMode.DISABLED;
+        motor.stop();
+    }
+
     private SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
         DoubleFunction<Command> test =(double constant) -> 
-
         Commands.sequence(
             Commands.waitUntil(() -> Math.abs(motor.getVelocity()) < 10),
             Commands.runOnce(
@@ -86,7 +100,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
         return new SearchAlgorithm(
             0.0005,
-            0.001,
+            0.0001,
             test,
             isValid,
             10.0,
@@ -95,13 +109,23 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     }
 
     public Command calculatePIDGains(){
+        if(mode==ControlMode.DISABLED)
+            return Commands.none();
         return Commands.sequence(
+            Commands.runOnce(()-> mode=ControlMode.CALIBRATION, this),
             searchAlgorithmForkP.findOptimal(this)
-        );
+        ).finallyDo(()-> mode=ControlMode.NORMAL);
     }
 
     public Command calculateFFGains(){
-        return routine.quasistaticRoutine(this, false);
+        if(mode==ControlMode.DISABLED)
+            return Commands.none();
+        return Commands.runOnce(()-> mode=ControlMode.CALIBRATION, this)
+        .andThen(routine.quasistaticRoutine(this, false))
+        .andThen(routine.quasistaticRoutine(this, true))
+        .andThen(routine.dynamicRoutine(this, false))
+        .andThen(routine.dynamicRoutine(this, true))
+        .finallyDo(()-> mode=ControlMode.NORMAL);
         // return Commands.sequence(
         //     routine.runFullRoutine(this),
         //     regressSamples()
@@ -121,17 +145,30 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     public void setTargetRPM(double targetRPM) {
         this.targetRPM = targetRPM;
         SmartDashboard.putNumber(name + "/TargetRPM", targetRPM);
-        motor.setVoltage(getVoltageFromPIDF());
     }
+
+    private void runPID() {
+        if (mode == ControlMode.NORMAL) {
+            motor.setVoltage(getVoltageFromPIDF());
+        } else if (mode == ControlMode.DISABLED) {
+            motor.stop();
+        }
+    }    
 
     public void publishTelemetry(){
         routine.publishTelemetry(name);
+        searchAlgorithmForkP.publishTelemetry(this);
         SmartDashboard.putNumber(name + "/CurrentRPM", motor.getVelocity());
         SmartDashboard.putNumber(name + "/AutoTune/Samples", samples.getSamples().size());
     }
 
+    public void backgroundTasks(){
+            runPID();
+    }
+
     @Override
     public void periodic() {
+        backgroundTasks();
         publishTelemetry();
     }
 }

@@ -13,7 +13,7 @@ public class CharacterizationRoutine {
     private Timer timer;
     private Motor motor;
     private double curVoltage;
-    private final double settledConstant = 0.1; //acceleration threshold for dynamic routine
+    private final double settledConstant = 10; //acceleration threshold for dynamic routine
     private Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
 
     public CharacterizationRoutine(FFCharacterizationSamples samples, CharacterizationConstraints constraints, Motor motor) {
@@ -26,6 +26,7 @@ public class CharacterizationRoutine {
     public Command quasistaticRoutine(SmartSubsystem subsystem, boolean inReverse) {
         
         return Commands.sequence(
+            waitTillStopped(subsystem),
             Commands.runOnce(()->{
                 timer.restart();
                 curVoltage=0;
@@ -64,9 +65,16 @@ public class CharacterizationRoutine {
         );
     }
 
+    public Command waitTillStopped(SmartSubsystem subsystem){
+        return Commands.run(()->{
+            motor.setVoltage(0);
+        }, subsystem)
+        .until(() -> Math.abs(motor.getVelocity()) < 10);
+    }
 public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
 
     return Commands.sequence(
+        waitTillStopped(subsystem),
         Commands.runOnce(() -> {
             timer.restart();
             debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);

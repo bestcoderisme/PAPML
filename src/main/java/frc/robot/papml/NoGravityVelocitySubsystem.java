@@ -20,8 +20,9 @@ import frc.robot.papml.abstraction.motor.Motor;
 public class NoGravityVelocitySubsystem extends SmartSubsystem {
     public enum ControlMode {
         DISABLED,
-        CALIBRATION,
-        NORMAL
+        NORMAL,
+        CALIBRATING_FF,
+        CALIBRATING_PID
     }
 
     private SimpleMotorFeedforward feedforward;
@@ -78,7 +79,6 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
                 setConstant.accept(constant);
                 timer.restart();
                 debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
-                setTargetRPM(targetRPM);
                 }
             ),
             Commands.waitUntil(
@@ -108,11 +108,12 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         );
     }
 
-    public Command calculatePIDGains(){
+    public Command calculatePIDGains(double targetRPMForCalibration){
         if(mode==ControlMode.DISABLED)
             return Commands.none();
         return Commands.sequence(
-            Commands.runOnce(()-> mode=ControlMode.CALIBRATION, this),
+            Commands.runOnce(()-> mode=ControlMode.CALIBRATING_PID, this),
+            setTargetRPMCmd(targetRPMForCalibration),
             searchAlgorithmForkP.findOptimal(this)
         ).finallyDo(()-> mode=ControlMode.NORMAL);
     }
@@ -120,7 +121,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     public Command calculateFFGains(){
         if(mode==ControlMode.DISABLED)
             return Commands.none();
-        return Commands.runOnce(()-> mode=ControlMode.CALIBRATION, this)
+        return Commands.runOnce(()-> mode=ControlMode.CALIBRATING_FF, this)
         .andThen(routine.quasistaticRoutine(this, false))
         .andThen(routine.quasistaticRoutine(this, true))
         .andThen(routine.dynamicRoutine(this, false))
@@ -147,8 +148,14 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         SmartDashboard.putNumber(name + "/TargetRPM", targetRPM);
     }
 
+    public Command setTargetRPMCmd(double targetRPM) {
+        return Commands.runOnce(() -> {
+            setTargetRPM(targetRPM);
+        }, this);
+    }
+
     private void runPID() {
-        if (mode == ControlMode.NORMAL) {
+        if (mode == ControlMode.NORMAL || mode == ControlMode.CALIBRATING_PID) {
             motor.setVoltage(getVoltageFromPIDF());
         } else if (mode == ControlMode.DISABLED) {
             motor.stop();

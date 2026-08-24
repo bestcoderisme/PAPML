@@ -60,7 +60,7 @@ public class SearchAlgorithm {
     }
 
     private Command findHigh(SmartSubsystem subsystem) {
-        return Commands.sequence(
+        return Commands.repeatingSequence(
                 Commands.runOnce(() -> {
                     low = high;
                     high *= 2;
@@ -88,7 +88,7 @@ public class SearchAlgorithm {
     }
 
     private Command binarySearch(SmartSubsystem subsystem) {
-        return Commands.sequence(
+        return Commands.repeatingSequence(
                 Commands.defer(() -> test.apply(getMidpoint()), Set.of(subsystem)),
                 Commands.runOnce(() -> {
                     if (!isValid.getAsBoolean()) {
@@ -128,9 +128,13 @@ public class SearchAlgorithm {
 
     public Command findOptimal(SmartSubsystem subsystem) {
         return Commands.sequence(
+            Commands.runOnce(()-> SmartDashboard.putNumber("step", 1)),
                 checkLow(subsystem),
+            Commands.runOnce(()-> SmartDashboard.putNumber("step", 2)),
                 findHigh(subsystem),
+            Commands.runOnce(()-> SmartDashboard.putNumber("step", 3)),
                 binarySearch(subsystem),
+            Commands.runOnce(()-> SmartDashboard.putNumber("step", 4)),
                 outputOptimal(subsystem)
         );
     }

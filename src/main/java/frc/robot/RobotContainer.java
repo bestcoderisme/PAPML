@@ -61,7 +61,7 @@ public class RobotContainer {
     m_driverController.a().onTrue(flyWheel.calculateFFGains());
     m_driverController.y().onTrue(flyWheel.regressSamples());
     m_driverController.x().onTrue(Commands.runOnce(() -> flyWheel.setTargetRPM(1000)));
-    m_driverController.b().onTrue(flyWheel.calculatePIDGains(3000));
+    m_driverController.b().onTrue(flyWheel.calculatePIDGains());
   }
 
   /**

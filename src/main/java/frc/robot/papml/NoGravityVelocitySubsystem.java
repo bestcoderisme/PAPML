@@ -32,7 +32,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     private SearchAlgorithm searchAlgorithmForkD;
     private Debouncer debouncer;
     private double lastTime=Double.POSITIVE_INFINITY;
-    private double currentTime;
+    private double currentTime=Double.POSITIVE_INFINITY;
     private ControlMode mode;
 
     
@@ -73,10 +73,12 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     private SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
         DoubleFunction<Command> test =(double constant) -> 
         Commands.sequence(
+            Commands.runOnce(()->setTargetRPM(0)),
             Commands.waitUntil(() -> Math.abs(motor.getVelocity()) < 10),
             Commands.runOnce(
                 () -> {
                 setConstant.accept(constant);
+                setTargetRPM(3000);
                 timer.restart();
                 debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
                 }
@@ -99,8 +101,8 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
 
         return new SearchAlgorithm(
-            0.0005,
-            0.0001,
+            0.000000000005,
+            0.0000000001,
             test,
             isValid,
             10.0,
@@ -108,12 +110,12 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         );
     }
 
-    public Command calculatePIDGains(double targetRPMForCalibration){
+    public Command calculatePIDGains(){
         if(mode==ControlMode.DISABLED)
             return Commands.none();
         return Commands.sequence(
             Commands.runOnce(()-> mode=ControlMode.CALIBRATING_PID, this),
-            setTargetRPMCmd(targetRPMForCalibration),
+            // setTargetRPMCmd(targetRPMForCalibration),
             searchAlgorithmForkP.findOptimal(this)
         ).finallyDo(()-> mode=ControlMode.NORMAL);
     }

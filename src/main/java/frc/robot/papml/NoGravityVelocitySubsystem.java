@@ -1,6 +1,7 @@
 package frc.robot.papml;
 
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleFunction;
@@ -71,9 +72,15 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     }
 
     private SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
+        AtomicBoolean reachedCalibrationTarget = new AtomicBoolean(false);
         DoubleFunction<Command> test =(double constant) -> 
         Commands.sequence(
-            Commands.runOnce(()->setTargetRPM(0)),
+            Commands.runOnce(()->
+            {
+                setTargetRPM(0);
+                reachedCalibrationTarget.set(false);
+            }
+            ),
             Commands.waitUntil(() -> Math.abs(motor.getVelocity()) < 10),
             Commands.runOnce(
                 () -> {
@@ -85,24 +92,25 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             ),
             Commands.waitUntil(
                 () -> {
-                    return debouncer.calculate(Math.abs(motor.getVelocity() - targetRPM) < targetRPM * 0.01);
+                    reachedCalibrationTarget.set(debouncer.calculate(Math.abs(motor.getVelocity() - targetRPM) < targetRPM * 0.005));
+                    return reachedCalibrationTarget.get();
                 }
             ).withTimeout(3),
             Commands.runOnce(
                 () -> {
                     lastTime = currentTime;
-                    currentTime = timer.get();
+                    currentTime = reachedCalibrationTarget.get() ? timer.get() : 3;
                     setTargetRPM(0);
                     motor.stop();
                 }
             )
         );
-        BooleanSupplier isValid = () ->  {return currentTime < lastTime;};
+        BooleanSupplier isValid = () ->  {return currentTime <= lastTime;};
 
 
         return new SearchAlgorithm(
-            0.000000000005,
-            0.0000000001,
+            0.000005,
+            0.00001,
             test,
             isValid,
             10.0,

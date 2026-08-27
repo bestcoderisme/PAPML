@@ -7,7 +7,6 @@ package frc.robot;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.papml.CharacterizationConstraints;
 import frc.robot.papml.NoGravityVelocitySubsystem;
-import frc.robot.papml.NoGravityVelocitySubsystem.ControlMode;
 import frc.robot.papml.abstraction.motor.REVMotor;
 
 import com.revrobotics.spark.SparkFlex;

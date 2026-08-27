@@ -19,43 +19,25 @@ import frc.robot.papml.FFCharacterizationSamples.GravityMode;
 import frc.robot.papml.abstraction.motor.Motor;
 
 public class NoGravityVelocitySubsystem extends SmartSubsystem {
-    public enum ControlMode {
-        DISABLED,
-        NORMAL,
-        CALIBRATING_FF,
-        CALIBRATING_PID
-    }
 
     private SimpleMotorFeedforward feedforward;
-    private double targetRPM;
     private CharacterizationRoutine routine;
-    private SearchAlgorithm searchAlgorithmForkP;
-    private SearchAlgorithm searchAlgorithmForkD;
     private Debouncer debouncer;
     private double lastTime=Double.POSITIVE_INFINITY;
     private double currentTime=Double.POSITIVE_INFINITY;
-    private ControlMode mode;
 
     
     public NoGravityVelocitySubsystem(String name, Motor motor, CharacterizationConstraints constraints) {
+        super(name, motor);
         samples = new FFCharacterizationSamples(GravityMode.NONE);
-        this.name = name;
-        this.motor = motor;
-        this.pid = new PIDController(0, 0.0, 0.0);
         FFConstants FFconstants =  FFConstants.getFFFromPreferences(name);
         this.feedforward = new SimpleMotorFeedforward(FFconstants.kS, FFconstants.kV, FFconstants.kA);
         this.routine = new CharacterizationRoutine(samples, constraints, motor);
 
         this.debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
 
-        this.mode = ControlMode.NORMAL;
+        initializeSearchAlgorithms();
 
-        searchAlgorithmForkP = createSearchAlgorithm((double constant) -> {
-            pid.setP(constant);
-        }, "kP");
-        searchAlgorithmForkD = createSearchAlgorithm((double constant) -> {
-            pid.setD(constant);
-        }, "kD");
 
         // SmartDashboard.putNumber(name+" subsystem kS", feedforward.getKs());
         // SmartDashboard.putNumber(name+" subsystem kV", feedforward.getKv());
@@ -66,12 +48,8 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         // SmartDashboard.putNumber(name+" subsystem targetRPM", targetRPM);
     }
 
-    public void disableSubsystem(){
-        mode = ControlMode.DISABLED;
-        motor.stop();
-    }
-
-    private SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
+    @Override
+    protected SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
         AtomicBoolean reachedCalibrationTarget = new AtomicBoolean(false);
         DoubleFunction<Command> test =(double constant) -> 
         Commands.sequence(
@@ -92,7 +70,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             ),
             Commands.waitUntil(
                 () -> {
-                    reachedCalibrationTarget.set(debouncer.calculate(Math.abs(motor.getVelocity() - targetRPM) < targetRPM * 0.005));
+                    reachedCalibrationTarget.set(debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * 0.005));
                     return reachedCalibrationTarget.get();
                 }
             ).withTimeout(3),
@@ -144,7 +122,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     }
 
     protected double getVoltageFromPIDF(){
-        return pid.calculate(motor.getEncoder().getVelocity(), targetRPM) + feedforward.calculate(targetRPM);
+        return pid.calculate(motor.getEncoder().getVelocity(), target) + feedforward.calculate(target);
     }
 
     @Override
@@ -153,39 +131,23 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         feedforward = new SimpleMotorFeedforward(FFconstants.kS, FFconstants.kV, FFconstants.kA);
     }
 
-    public void setTargetRPM(double targetRPM) {
-        this.targetRPM = targetRPM;
-        SmartDashboard.putNumber(name + "/TargetRPM", targetRPM);
+    public void setTargetRPM(double target) {
+        this.target = target;
+        SmartDashboard.putNumber(name + "/TargetRPM", target);
     }
 
-    public Command setTargetRPMCmd(double targetRPM) {
+    public Command setTargetRPMCmd(double target) {
         return Commands.runOnce(() -> {
-            setTargetRPM(targetRPM);
+            setTargetRPM(target);
         }, this);
     }
 
-    private void runPID() {
-        if (mode == ControlMode.NORMAL || mode == ControlMode.CALIBRATING_PID) {
-            motor.setVoltage(getVoltageFromPIDF());
-        } else if (mode == ControlMode.DISABLED) {
-            motor.stop();
-        }
-    }    
-
+    @Override
     public void publishTelemetry(){
+        super.publishTelemetry();
         routine.publishTelemetry(name);
         searchAlgorithmForkP.publishTelemetry(this);
         SmartDashboard.putNumber(name + "/CurrentRPM", motor.getVelocity());
         SmartDashboard.putNumber(name + "/AutoTune/Samples", samples.getSamples().size());
-    }
-
-    public void backgroundTasks(){
-            runPID();
-    }
-
-    @Override
-    public void periodic() {
-        backgroundTasks();
-        publishTelemetry();
     }
 }

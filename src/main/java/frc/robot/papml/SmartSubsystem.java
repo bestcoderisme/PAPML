@@ -3,6 +3,7 @@ package frc.robot.papml;
 import java.util.function.DoubleConsumer;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,6 +19,14 @@ public abstract class SmartSubsystem extends SubsystemBase{
         CALIBRATING_PID
     }
 
+    private enum TargetSide {
+        BELOW,
+        ABOVE
+    }
+
+    protected TargetSide previousSide;
+    protected int oscillations;
+
     protected Motor motor;
     protected PIDController pid;
     protected String name;
@@ -28,13 +37,19 @@ public abstract class SmartSubsystem extends SubsystemBase{
     protected double target;
     protected SearchAlgorithm searchAlgorithmForkP;
     protected SearchAlgorithm searchAlgorithmForkD;
+    protected double accuracyThreshold = 0.005; 
+    protected int oscillationLimit;
+    protected Debouncer debouncer;
 
 
-    protected SmartSubsystem(String name, Motor motor) {
+    protected SmartSubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit) {
         this.name = name;
         this.motor = motor;
         this.pid = new PIDController(0, 0.0, 0.0);
         this.mode = ControlMode.NORMAL;
+        this.accuracyThreshold = accuracyThreshold;
+        this.oscillationLimit = oscillationLimit;
+        initializeSmartDashboard();
     }
 
     protected void initializeSearchAlgorithms(){
@@ -89,6 +104,11 @@ public abstract class SmartSubsystem extends SubsystemBase{
     protected void backgroundTasks(){
         runPID();
         publishTelemetry();
+
+        if(mode==ControlMode.CALIBRATING_PID){
+            checkOscillation(motor.getVelocity(), target);
+            SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
+        }
     }
 
     public void periodic() {
@@ -97,4 +117,43 @@ public abstract class SmartSubsystem extends SubsystemBase{
 
     abstract SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName);
 
+    protected void checkOscillation(double velocity, double targetRPM) {
+        double error = velocity - targetRPM;
+
+        TargetSide side = null;
+
+        if (error > targetRPM * accuracyThreshold) {
+            side = TargetSide.ABOVE;
+        } else if (error < -targetRPM * accuracyThreshold) {
+            side = TargetSide.BELOW;
+        }
+
+        if (side != null) {
+            if (previousSide != null && side != previousSide) {
+                oscillations++;
+            }
+
+            previousSide = side;
+        }
+    }
+
+    protected void initializeSmartDashboard() {
+        publishTelemetry();
+        SmartDashboard.putNumber(name + "/AutoTune/TargetRPM", 0);
+        SmartDashboard.putNumber(name + "/AutoTune/AccuracyThreshold", accuracyThreshold);
+        SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
+    }
+
+    protected boolean isWithinOscillationLimit() {
+        return oscillations <= oscillationLimit;
+    }
+
+    protected boolean isSettled() {
+        return debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * accuracyThreshold);
+    }
+
+    protected void resetOscillationTracking() {
+        previousSide = null;
+        oscillations = 0;
+    }
 }

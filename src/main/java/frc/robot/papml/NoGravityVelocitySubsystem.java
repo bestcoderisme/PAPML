@@ -22,13 +22,12 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
     private SimpleMotorFeedforward feedforward;
     private CharacterizationRoutine routine;
-    private Debouncer debouncer;
     private double lastTime=Double.POSITIVE_INFINITY;
     private double currentTime=Double.POSITIVE_INFINITY;
 
     
-    public NoGravityVelocitySubsystem(String name, Motor motor, CharacterizationConstraints constraints) {
-        super(name, motor);
+    public NoGravityVelocitySubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit, CharacterizationConstraints constraints) {
+        super(name, motor, accuracyThreshold, oscillationLimit);
         samples = new FFCharacterizationSamples(GravityMode.NONE);
         FFConstants FFconstants =  FFConstants.getFFFromPreferences(name);
         this.feedforward = new SimpleMotorFeedforward(FFconstants.kS, FFconstants.kV, FFconstants.kA);
@@ -57,6 +56,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             {
                 setTargetRPM(0);
                 reachedCalibrationTarget.set(false);
+                resetOscillationTracking();
             }
             ),
             Commands.waitUntil(() -> Math.abs(motor.getVelocity()) < 10),
@@ -70,7 +70,10 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             ),
             Commands.waitUntil(
                 () -> {
-                    reachedCalibrationTarget.set(debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * 0.005));
+                    if(!isWithinOscillationLimit()){
+                        return true;
+                    }
+                    reachedCalibrationTarget.set(isSettled());
                     return reachedCalibrationTarget.get();
                 }
             ).withTimeout(3),

@@ -37,7 +37,7 @@ public class RobotContainer {
       REVMotor flyWheelMotorLeader = new REVMotor(new SparkFlex(18, MotorType.kBrushless));
       REVMotor flyWheelMotorFollower = new REVMotor(new SparkFlex(19, MotorType.kBrushless));
       flyWheelMotorFollower.follow(flyWheelMotorLeader, true);
-      flyWheel = new NoGravityVelocitySubsystem("flyWheel", flyWheelMotorLeader, CharacterizationConstraints.createDefaultFlywheel());
+      flyWheel = new NoGravityVelocitySubsystem("flyWheel", flyWheelMotorLeader, 0.005, 5, CharacterizationConstraints.createDefaultFlywheel());
     // Configure the trigger bindings
     configureBindings();
   }

@@ -9,7 +9,7 @@ public class FFCharacterizationSamples {
         NONE,
         COSINE,
         LINEAR
-    }
+        }
 
     static class FFCharacterizationSample{
         public final double time;

@@ -6,14 +6,14 @@ package frc.robot.papml;
         public final double timeLimit; // Optional time limit for the characterization routine
         public final double quasistaticRampRate;
         public final double dynamicVoltage;
+        public final double equilibriumRampRate;
         public final RangeConstraints rangeConstraints;
-        
 
         public static CharacterizationConstraints createDefaultFlywheel() {
-            return new CharacterizationConstraints(12, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0.5, 12, null);
+            return new CharacterizationConstraints(12, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0.5, 12, 0, null);
         }
 
-        private CharacterizationConstraints(double maxVoltage, double maxVelocity, double timeLimit, double quasistaticRampRate, double dynamicVoltage, RangeConstraints rangeConstraints) {
+        private CharacterizationConstraints(double maxVoltage, double maxVelocity, double timeLimit, double quasistaticRampRate, double dynamicVoltage, double equilibriumRampRate, RangeConstraints rangeConstraints) {
             if(maxVoltage <= 0) {
                 throw new IllegalArgumentException("maxVoltage must be greater than 0");
             }
@@ -44,6 +44,7 @@ package frc.robot.papml;
             this.dynamicVoltage = dynamicVoltage;
             this.timeLimit = timeLimit;
             this.rangeConstraints = rangeConstraints;
+            this.equilibriumRampRate = equilibriumRampRate;
         }
 
         public CharacterizationConstraints withMaxVoltage(double maxVoltage) {
@@ -53,6 +54,7 @@ package frc.robot.papml;
                     this.timeLimit,
                     this.quasistaticRampRate,
                     this.dynamicVoltage,
+                    this.equilibriumRampRate,
                     this.rangeConstraints);
         }
 
@@ -63,6 +65,7 @@ package frc.robot.papml;
                     this.timeLimit,
                     this.quasistaticRampRate,
                     this.dynamicVoltage,
+                    this.equilibriumRampRate,
                     this.rangeConstraints);
         }
 
@@ -73,6 +76,7 @@ package frc.robot.papml;
                     this.timeLimit,
                     quasistaticRampRate,
                     this.dynamicVoltage,
+                    this.equilibriumRampRate,
                     this.rangeConstraints);
         }
 
@@ -83,6 +87,7 @@ package frc.robot.papml;
                     this.timeLimit,
                     this.quasistaticRampRate,
                     dynamicVoltage,
+                    this.equilibriumRampRate,
                     this.rangeConstraints);
         }
 
@@ -93,6 +98,7 @@ package frc.robot.papml;
                     this.timeLimit,
                     this.quasistaticRampRate,
                     this.dynamicVoltage,
+                    this.equilibriumRampRate,
                     new RangeConstraints(minPosition, maxPosition));
         }
 
@@ -103,6 +109,18 @@ package frc.robot.papml;
                 seconds,
                 this.quasistaticRampRate,
                 this.dynamicVoltage,
+                this.equilibriumRampRate,
+                this.rangeConstraints);
+        }
+
+        public CharacterizationConstraints withEquilibriumRampRate(double equilibriumRampRate) {
+            return new CharacterizationConstraints(
+                this.maxVoltage,
+                this.maxVelocity,
+                this.timeLimit,
+                this.quasistaticRampRate,
+                this.dynamicVoltage,
+                equilibriumRampRate,
                 this.rangeConstraints);
         }
 

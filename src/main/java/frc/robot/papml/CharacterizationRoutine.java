@@ -107,6 +107,46 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
     );
 }
 
+    public Command equilibriumRoutine(SmartSubsystem subsystem) {
+        return Commands.sequence(
+            waitTillStopped(subsystem),
+            Commands.runOnce(() -> {
+                timer.restart();
+                debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
+                curVoltage = 0;
+            }),
+
+            Commands.repeatingSequence(
+                Commands.waitUntil(() -> settled()),
+                Commands.runOnce(() -> {
+
+                curVoltage += constraints.equilibriumRampRate;
+                motor.setVoltage(curVoltage);
+
+                double time = timer.get();
+
+                samples.addSample(
+                    time,
+                    motor.getPosition(),
+                    0,
+                    curVoltage
+                );
+
+            }, subsystem)
+            )
+            .until(() ->
+                timer.hasElapsed(constraints.timeLimit)
+                || Math.abs(motor.getVelocity()) >= constraints.maxVelocity
+                || settled() //add another stop condition acceleration
+            ),
+
+            Commands.runOnce(() -> {
+                motor.setVoltage(0);
+                timer.stop();
+            })
+        );
+    }
+
     public Command runFullRoutine(SmartSubsystem subsystem) {
         return Commands.sequence(
             quasistaticRoutine(subsystem, false),

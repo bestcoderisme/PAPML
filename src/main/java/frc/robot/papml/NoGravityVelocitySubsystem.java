@@ -20,10 +20,10 @@ import frc.robot.papml.abstraction.motor.Motor;
 
 public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
-    private SimpleMotorFeedforward feedforward;
-    private CharacterizationRoutine routine;
-    private double lastTime=Double.POSITIVE_INFINITY;
-    private double currentTime=Double.POSITIVE_INFINITY;
+    protected SimpleMotorFeedforward feedforward;
+    protected CharacterizationRoutine routine;
+    protected double lastTime=Double.POSITIVE_INFINITY;
+    protected double currentTime=Double.POSITIVE_INFINITY;
 
     
     public NoGravityVelocitySubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit, CharacterizationConstraints constraints) {

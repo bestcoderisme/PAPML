@@ -10,31 +10,55 @@ public class FFRegression {
     private OLSMultipleLinearRegression regression;
     private double[] voltages;
     private double [][] inputs;
-    public FFRegression(FFCharacterizationSamples samples) {
+    FFCharacterizationSamples samples;
+    boolean equilibriumTest;
+    public FFRegression(FFCharacterizationSamples samples, boolean filterLowVelocity, boolean equilibriumTest) {
+        this.samples = samples;
+        this.equilibriumTest = equilibriumTest;
         this.regression = new OLSMultipleLinearRegression();
         regression.setNoIntercept(true);
-        velocityFilter(samples);
+        if(filterLowVelocity) {
+            velocityFilter(samples);
+        }
         double[] accelerations = calculateAcceleration(samples);
         this.voltages = new double[samples.getSamples().size()-1];
-        if(samples.getGravityMode() == GravityMode.NONE){
-            this.inputs = new double[samples.getSamples().size()-1][3];
+        if (equilibriumTest) {
+            this.inputs = new double[samples.getSamples().size() - 1][2];
+        } else if (samples.getGravityMode() == GravityMode.NONE) {
+            this.inputs = new double[samples.getSamples().size() - 1][3];
         } else {
-            this.inputs = new double[samples.getSamples().size()-1][4];
+            this.inputs = new double[samples.getSamples().size() - 1][4];
         }
-
         //get i+1 to skip first sample which has invalid acceleration reading
         for(int i = 0; i < samples.getSamples().size()-1; i++){
             FFCharacterizationSample sample = samples.getSamples().get(i + 1);
 
             voltages[i] = sample.voltage;
-            inputs[i][0] = Math.signum(sample.velocity);
-            inputs[i][1] = sample.velocity;
-            inputs[i][2] = accelerations[i];
+            if(equilibriumTest){
+                inputs[i][0] = 1;
+            }
+            else{
+                inputs[i][0] = Math.signum(sample.velocity);
+            }
+            if(!equilibriumTest){
+                inputs[i][1] = sample.velocity;
+                inputs[i][2] = accelerations[i];
+            }
             if(samples.getGravityMode() == GravityMode.LINEAR){
-                inputs[i][3] = 1;
+                if(equilibriumTest){
+                    inputs[i][1] = 1;
+                }
+                else{
+                    inputs[i][3] = 1;
+                }
             }
             else if(samples.getGravityMode() == GravityMode.COSINE){
-                inputs[i][3] = Math.cos(sample.position);
+                if(equilibriumTest){
+                    inputs[i][1] = Math.cos(sample.position);
+                }
+                else{
+                    inputs[i][3] = Math.cos(sample.position);
+                }
             }
         }
         regression.newSampleData(voltages, inputs); 
@@ -42,8 +66,11 @@ public class FFRegression {
 
     public FFConstants getCoefficients() {
         double[] coeffs = regression.estimateRegressionParameters();
-        if(inputs[0].length == 3){
+        if(samples.getGravityMode() == GravityMode.NONE){
             return new FFConstants(coeffs[0], coeffs[1], coeffs[2], 0);
+        }
+        if(equilibriumTest){
+            return new FFConstants(coeffs[0], 0, 0, coeffs[1]);
         }
         return new FFConstants(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
     }

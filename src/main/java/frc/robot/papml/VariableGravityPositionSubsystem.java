@@ -28,7 +28,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
 
     //for arms using absolute encoder, get value from the run into hard stop calibration command
     public void setOffset(double offset){
-        motor.setOffset(offset);
+        motor.setOffsetRadians(offset);
     }
 
     private Command runIntoHardStopCalibration(double voltage, double stoppedVelocityThreshold, Runnable offsetSetter) {
@@ -60,11 +60,6 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             motor.setOffsetFromCurrentRotations(rotationsAtHardStop);
         });
     }
-
-    // @Override
-    // protected double calculateFeedforward(double targetVelocity) {
-    //     return feedforward.calculate(targetVelocity) + gravityCompensation;
-    // }
     // @Override
     // protected SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName) {
 
@@ -78,8 +73,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
 
     @Override
     Command calculateFFGains() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'calculateFFGains'");
+        return routine.equilibriumRoutine(this, () -> motor.getAngleInRadians());
     }
 
     @Override
@@ -93,7 +87,16 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'createSearchAlgorithm'");
     }
-    
+
+    public Command regressSamples(){
+        return Commands.runOnce(()->{
+            regressor = new FFRegression(samples, true, false);
+            FFConstants coeffs = regressor.getCoefficients();
+            coeffs.publishToSmartDashboard(name);
+            coeffs.publishToPreferences(name);
+            setFFWithPreferences();
+        });
+    }
 
     private class ArmMotor {
         private Motor motor;
@@ -105,7 +108,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             this.gearRatio = gearRatio;
         }
 
-        public void setOffset(double offset){
+        public void setOffsetRadians(double offset){
             this.offset = offset;
         }
 
@@ -121,7 +124,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             this.offset = currAngle/(2*Math.PI) - motor.getPosition() / gearRatio;
         }
 
-        public double getAngleInRotations(){
+        private double getAngleInRotations(){
             return motor.getPosition() / gearRatio + offset;
         }
 
@@ -129,9 +132,9 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             return getAngleInRotations() * 2 * Math.PI;
         }
 
-        public double getAngleInDegrees(){
-            return getAngleInRotations() * 360;
-        }
+        // public double getAngleInDegrees(){
+        //     return getAngleInRotations() * 360;
+        // }
 
         public Motor getMotor(){
             return motor;

@@ -1,5 +1,6 @@
 package frc.robot.papml;
 
+import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,7 +14,8 @@ public class CharacterizationRoutine {
     private Timer timer;
     private Motor motor;
     private double curVoltage;
-    private final double settledConstant = 10; //acceleration threshold for dynamic routine
+    private final double accelerationSettledConstant = 10; //acceleration threshold for dynamic routine
+    private final double velocitySettledConstant = 10; //velocity threshold for equilibrium routine
     private Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
 
     public CharacterizationRoutine(FFCharacterizationSamples samples, CharacterizationConstraints constraints, Motor motor) {
@@ -69,7 +71,7 @@ public class CharacterizationRoutine {
         return Commands.run(()->{
             motor.setVoltage(0);
         }, subsystem)
-        .until(() -> Math.abs(motor.getVelocity()) < 10);
+        .until(() -> velocitySettled());
     }
 public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
 
@@ -97,7 +99,7 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
         .until(() ->
             timer.hasElapsed(constraints.timeLimit)
             || Math.abs(motor.getVelocity()) >= constraints.maxVelocity
-            || settled() //add another stop condition acceleration
+            || accelerationSettled() //add another stop condition acceleration
         ),
 
         Commands.runOnce(() -> {
@@ -107,7 +109,7 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
     );
 }
 
-    public Command equilibriumRoutine(SmartSubsystem subsystem) {
+    public Command equilibriumRoutine(SmartSubsystem subsystem, DoubleSupplier getAngleInRadians) {
         return Commands.sequence(
             waitTillStopped(subsystem),
             Commands.runOnce(() -> {
@@ -117,7 +119,7 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
             }),
 
             Commands.repeatingSequence(
-                Commands.waitUntil(() -> settled()),
+                Commands.waitUntil(() -> velocitySettled()),
                 Commands.runOnce(() -> {
 
                 curVoltage += constraints.equilibriumRampRate;
@@ -127,7 +129,7 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
 
                 samples.addSample(
                     time,
-                    motor.getPosition(),
+                    getAngleInRadians.getAsDouble(),
                     0,
                     curVoltage
                 );
@@ -137,7 +139,10 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
             .until(() ->
                 timer.hasElapsed(constraints.timeLimit)
                 || Math.abs(motor.getVelocity()) >= constraints.maxVelocity
-                || settled() //add another stop condition acceleration
+                || Math.abs(curVoltage) >= constraints.maxVoltage
+                || getAngleInRadians.getAsDouble() >= constraints.rangeConstraints.maxPosition
+                || getAngleInRadians.getAsDouble() <= constraints.rangeConstraints.minPosition
+                // || settled() //add another stop condition acceleration
             ),
 
             Commands.runOnce(() -> {
@@ -175,7 +180,11 @@ public Command dynamicRoutine(SmartSubsystem subsystem, boolean inReverse) {
     }    
 
 
-    private boolean settled(){
-        return debouncer.calculate(Math.abs(getAcceleration()) < settledConstant);
+    private boolean accelerationSettled(){
+        return debouncer.calculate(Math.abs(getAcceleration()) < accelerationSettledConstant);
+    }
+
+    private boolean velocitySettled() {
+        return debouncer.calculate(Math.abs(motor.getVelocity()) < velocitySettledConstant);
     }
 }

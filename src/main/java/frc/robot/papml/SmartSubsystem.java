@@ -62,7 +62,7 @@ public abstract class SmartSubsystem extends SubsystemBase{
     }
     public Command regressSamples(){
         return Commands.runOnce(()->{
-            regressor = new FFRegression(samples, true, false);
+            regressor = new FFRegression(samples, false, true);
             FFConstants coeffs = regressor.getCoefficients();
             coeffs.publishToSmartDashboard(name);
             coeffs.publishToPreferences(name);

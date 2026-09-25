@@ -153,6 +153,6 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     }
 
     protected boolean isVelocitySettled() {
-        return debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * accuracyThreshold);
+        return debouncer.calculate(Math.abs(motor.getVelocity() - target) < Math.abs(target) * accuracyThreshold);
     }
 }

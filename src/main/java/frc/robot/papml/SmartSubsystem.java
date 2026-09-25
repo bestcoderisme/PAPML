@@ -40,6 +40,9 @@ public abstract class SmartSubsystem extends SubsystemBase{
     protected double accuracyThreshold = 0.005; 
     protected int oscillationLimit;
     protected Debouncer debouncer;
+    protected double lastTime=Double.POSITIVE_INFINITY;
+    protected double currentTime=Double.POSITIVE_INFINITY;
+
 
 
     protected SmartSubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit) {
@@ -52,13 +55,13 @@ public abstract class SmartSubsystem extends SubsystemBase{
         initializeSmartDashboard();
     }
 
-    protected void initializeSearchAlgorithms(){
+    protected void initializeSearchAlgorithms(double target){
         searchAlgorithmForkP = createSearchAlgorithm((double constant) -> {
             pid.setP(constant);
-        }, "kP");
+        }, "kP", target);
         searchAlgorithmForkD = createSearchAlgorithm((double constant) -> {
             pid.setD(constant);
-        }, "kD");
+        }, "kD", target);
     }
     public Command regressSamples(){
         return Commands.runOnce(()->{
@@ -115,7 +118,7 @@ public abstract class SmartSubsystem extends SubsystemBase{
         backgroundTasks();
     }
 
-    abstract SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName);
+    abstract SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName, double target);
 
     protected void checkOscillation(double velocity, double targetRPM) {
         double error = velocity - targetRPM;

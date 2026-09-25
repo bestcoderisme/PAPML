@@ -22,11 +22,9 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
     protected SimpleMotorFeedforward feedforward;
     protected CharacterizationRoutine routine;
-    protected double lastTime=Double.POSITIVE_INFINITY;
-    protected double currentTime=Double.POSITIVE_INFINITY;
 
     
-    public NoGravityVelocitySubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit, CharacterizationConstraints constraints) {
+    public NoGravityVelocitySubsystem(String name, Motor motor, double accuracyThreshold, int oscillationLimit, CharacterizationConstraints constraints, double targetRPM) {
         super(name, motor, accuracyThreshold, oscillationLimit);
         samples = new FFCharacterizationSamples(GravityMode.NONE);
         FFConstants FFconstants =  FFConstants.getFFFromPreferences(name);
@@ -35,7 +33,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
 
         this.debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
 
-        initializeSearchAlgorithms();
+        initializeSearchAlgorithms(targetRPM);
 
 
         // SmartDashboard.putNumber(name+" subsystem kS", feedforward.getKs());
@@ -48,7 +46,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     }
 
     @Override
-    protected SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName){
+    protected SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName, double target){
         AtomicBoolean reachedCalibrationTarget = new AtomicBoolean(false);
         DoubleFunction<Command> test =(double constant) -> 
         Commands.sequence(
@@ -63,7 +61,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             Commands.runOnce(
                 () -> {
                 setConstant.accept(constant);
-                setTargetRPM(3000);
+                setTargetRPM(target);
                 timer.restart();
                 debouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
                 }

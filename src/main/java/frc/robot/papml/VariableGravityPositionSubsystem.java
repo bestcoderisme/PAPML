@@ -77,7 +77,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
                 resetOscillationTracking();
             }
             ),
-            Commands.waitUntil(() -> Math.abs(motor.getAngleInRadians() - target) < accuracyThreshold),
+            Commands.waitUntil(() -> Math.abs(motor.getAngleInRadians() - rangeConstraints.minPosition) < accuracyThreshold),
             Commands.runOnce(
                 () -> {
                 setConstant.accept(constant);
@@ -91,7 +91,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
                     if(!isWithinOscillationLimit()){
                         return true;
                     }
-                    reachedCalibrationTarget.set(isSettled());
+                    reachedCalibrationTarget.set(isPositionSettled());
                     return reachedCalibrationTarget.get();
                 }
             ).withTimeout(3),

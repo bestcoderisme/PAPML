@@ -71,7 +71,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
                     if(!isWithinOscillationLimit()){
                         return true;
                     }
-                    reachedCalibrationTarget.set(isSettled());
+                    reachedCalibrationTarget.set(isVelocitySettled());
                     return reachedCalibrationTarget.get();
                 }
             ).withTimeout(3),

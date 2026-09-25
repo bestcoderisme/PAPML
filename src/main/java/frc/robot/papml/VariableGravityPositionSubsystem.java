@@ -183,4 +183,10 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
         SmartDashboard.putNumber(name + "/TargetPosition", target);
     }
 
+    protected boolean isPositionSettled() {
+        return debouncer.calculate(
+            Math.abs(motor.getAngleInRadians() - target) < accuracyThreshold
+        );
+    }
+
 }

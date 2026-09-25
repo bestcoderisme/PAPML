@@ -151,4 +151,8 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         SmartDashboard.putNumber(name + "/CurrentRPM", motor.getVelocity());
         SmartDashboard.putNumber(name + "/AutoTune/Samples", samples.getSamples().size());
     }
+
+    protected boolean isVelocitySettled() {
+        return debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * accuracyThreshold);
+    }
 }

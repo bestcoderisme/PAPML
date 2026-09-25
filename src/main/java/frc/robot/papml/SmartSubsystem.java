@@ -151,16 +151,6 @@ public abstract class SmartSubsystem extends SubsystemBase{
         return oscillations <= oscillationLimit;
     }
 
-    protected boolean isVelocitySettled() {
-        return debouncer.calculate(Math.abs(motor.getVelocity() - target) < target * accuracyThreshold);
-    }
-
-    protected boolean isPositionSettled() {
-        return debouncer.calculate(
-            Math.abs(motor.getPosition() - target) < accuracyThreshold
-        );
-    }
-
     protected void resetOscillationTracking() {
         previousSide = null;
         oscillations = 0;

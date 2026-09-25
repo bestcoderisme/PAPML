@@ -4,10 +4,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleFunction;
-import java.util.prefs.Preferences;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -31,6 +31,11 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
         initializeSearchAlgorithms(targetPositionForPIDTuning);
     }
 
+    public VariableGravityPositionSubsystem withOffsetFromPreferences(){
+        motor.setOffsetRadians(Preferences.getDouble(name + "/Offset", 0));
+        return this;
+    }
+
     //for arms using absolute encoder, get value from the run into hard stop calibration command
     public void setOffsetRadians(double offset){
         motor.setOffsetRadians(offset);
@@ -45,6 +50,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             offsetSetter.run();
             motor.getMotor().setVoltage(0);
             SmartDashboard.putNumber(name + "/Offset", motor.offsetRadians);
+            Preferences.setDouble(name + "/Offset", motor.offsetRadians);
         }));
     }
 
@@ -119,8 +125,8 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
 
     @Override
     void setFFWithPreferences() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setFFWithPreferences'");
+        FFConstants coeffs = FFConstants.getFFFromPreferences(name);
+        feedforward = new ArmFeedforward(coeffs.kS, coeffs.kG, coeffs.kV, coeffs.kA);
     }
 
     @Override
@@ -183,10 +189,25 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
         SmartDashboard.putNumber(name + "/TargetPosition", target);
     }
 
-    protected boolean isPositionSettled() {
+    public Command setTargetPositionCmd(double target) {
+        return Commands.runOnce(() -> {
+            setTargetPosition(target);
+        }, this);
+    }
+
+    protected boolean isPositionSettled() {     
         return debouncer.calculate(
             Math.abs(motor.getAngleInRadians() - target) < accuracyThreshold
         );
+    }
+
+    @Override
+    protected void publishTelemetry() {
+        super.publishTelemetry();
+        routine.publishTelemetry(name);
+        searchAlgorithmForkP.publishTelemetry(this);
+        SmartDashboard.putNumber(name + "/CurrentPosition", motor.getAngleInRadians());
+        SmartDashboard.putNumber(name + "/AutoTune/Samples", samples.getSamples().size());
     }
 
 }

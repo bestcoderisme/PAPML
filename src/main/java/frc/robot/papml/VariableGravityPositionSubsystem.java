@@ -51,7 +51,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
             motor.getMotor().setVoltage(0);
             SmartDashboard.putNumber(name + "/Offset", motor.offsetRadians);
             Preferences.setDouble(name + "/Offset", motor.offsetRadians);
-        }));
+        })).withTimeout(5);
     }
 
     public Command runIntoHardStopCalibrationDegrees(double voltage, double stoppedVelocityThreshold, double degreesAtHardStop) {
@@ -208,6 +208,15 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
         searchAlgorithmForkP.publishTelemetry(this);
         SmartDashboard.putNumber(name + "/CurrentPosition", motor.getAngleInRadians());
         SmartDashboard.putNumber(name + "/AutoTune/Samples", samples.getSamples().size());
+    }
+
+    @Override
+    protected void backgroundTasks(){
+        super.backgroundTasks();
+        if(mode==ControlMode.CALIBRATING_PID){
+            checkForOscillation(motor.getAngleInRadians(), target);
+            SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
+        }
     }
 
 }

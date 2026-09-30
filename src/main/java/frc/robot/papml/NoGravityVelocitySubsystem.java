@@ -155,4 +155,13 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
     protected boolean isVelocitySettled() {
         return debouncer.calculate(Math.abs(motor.getVelocity() - target) < Math.abs(target) * accuracyThreshold);
     }
+
+    @Override
+    protected void backgroundTasks(){
+        super.backgroundTasks();
+        if(mode==ControlMode.CALIBRATING_PID){
+            checkForOscillation(motor.getVelocity(), target);
+            SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
+        }
+    }
 }

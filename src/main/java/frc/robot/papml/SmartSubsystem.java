@@ -109,7 +109,7 @@ public abstract class SmartSubsystem extends SubsystemBase{
         publishTelemetry();
 
         if(mode==ControlMode.CALIBRATING_PID){
-            checkOscillation(motor.getVelocity(), target);
+            checkForOscillation(motor.getVelocity(), target);
             SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
         }
     }
@@ -120,14 +120,14 @@ public abstract class SmartSubsystem extends SubsystemBase{
 
     abstract SearchAlgorithm createSearchAlgorithm(DoubleConsumer setConstant, String constantName, double target);
 
-    protected void checkOscillation(double velocity, double targetRPM) {
-        double error = velocity - targetRPM;
+    protected void checkForOscillation(double currentValue, double targetValue) {
+        double error = currentValue - targetValue;
 
         TargetSide side = null;
 
-        if (error > targetRPM * accuracyThreshold) {
+        if (error > targetValue * accuracyThreshold) {
             side = TargetSide.ABOVE;
-        } else if (error < -targetRPM * accuracyThreshold) {
+        } else if (error < -targetValue * accuracyThreshold) {
             side = TargetSide.BELOW;
         }
 

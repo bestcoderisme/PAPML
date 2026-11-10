@@ -135,6 +135,17 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
     }
 
     @Override
+    Command calculatePIDGains() {
+        if(mode==ControlMode.DISABLED)
+            return Commands.none();
+        return Commands.sequence(
+            Commands.runOnce(()-> mode=ControlMode.CALIBRATING_PID, this),
+            // setTargetRPMCmd(targetRPMForCalibration),
+            searchAlgorithmForkP.findOptimal(this)
+        ).finallyDo(()-> mode=ControlMode.NORMAL);
+    }
+
+    @Override
     double getVoltageFromPIDF() {
         return pid.calculate(motor.getAngleInRadians(), target) + feedforward.calculate(target, 0);
     }
@@ -211,12 +222,7 @@ public class VariableGravityPositionSubsystem extends SmartSubsystem {
     }
 
     @Override
-    protected void backgroundTasks(){
-        super.backgroundTasks();
-        if(mode==ControlMode.CALIBRATING_PID){
-            checkForOscillation(motor.getAngleInRadians(), target);
-            SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
-        }
+    protected double getCurrentValue() {
+        return motor.getAngleInRadians();
     }
-
 }

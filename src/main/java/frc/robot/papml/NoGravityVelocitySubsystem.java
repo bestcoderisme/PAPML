@@ -97,6 +97,7 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         );
     }
 
+    @Override
     public Command calculatePIDGains(){
         if(mode==ControlMode.DISABLED)
             return Commands.none();
@@ -107,14 +108,17 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
         ).finallyDo(()-> mode=ControlMode.NORMAL);
     }
 
+    @Override
     public Command calculateFFGains(){
         if(mode==ControlMode.DISABLED)
             return Commands.none();
         return Commands.runOnce(()-> mode=ControlMode.CALIBRATING_FF, this)
-        .andThen(routine.quasistaticRoutine(this, false))
-        .andThen(routine.quasistaticRoutine(this, true))
-        .andThen(routine.dynamicRoutine(this, false))
-        .andThen(routine.dynamicRoutine(this, true))
+        // .andThen(routine.quasistaticRoutine(this, false))
+        // .andThen(routine.quasistaticRoutine(this, true))
+        // .andThen(routine.dynamicRoutine(this, false))
+        // .andThen(routine.dynamicRoutine(this, true))
+        .andThen(routine.runFullRoutine(this))
+        .andThen(regressSamples())
         .finallyDo(()-> mode=ControlMode.NORMAL);
         // return Commands.sequence(
         //     routine.runFullRoutine(this),
@@ -163,5 +167,10 @@ public class NoGravityVelocitySubsystem extends SmartSubsystem {
             checkForOscillation(motor.getVelocity(), target);
             SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
         }
+    }
+
+    @Override
+    protected double getCurrentValue() {
+        return motor.getVelocity();
     }
 }

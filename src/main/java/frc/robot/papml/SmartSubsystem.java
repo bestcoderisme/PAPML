@@ -77,10 +77,15 @@ public abstract class SmartSubsystem extends SubsystemBase{
 
     abstract Command calculateFFGains();
 
+    abstract Command calculatePIDGains();
+
     abstract double getVoltageFromPIDF();
 
-    public void autoTune(){
-        calculateFFGains();
+    public Command tuneFFAndPID(){
+        return Commands.sequence(
+            calculateFFGains(),
+            calculatePIDGains()
+        );
     }
 
     public String getName(){
@@ -109,10 +114,12 @@ public abstract class SmartSubsystem extends SubsystemBase{
         publishTelemetry();
 
         if(mode==ControlMode.CALIBRATING_PID){
-            checkForOscillation(motor.getVelocity(), target);
+            checkForOscillation(getCurrentValue(), target);
             SmartDashboard.putNumber(name + "/AutoTune/Oscillations", oscillations);
         }
     }
+
+    abstract double getCurrentValue();
 
     public void periodic() {
         backgroundTasks();
@@ -125,9 +132,9 @@ public abstract class SmartSubsystem extends SubsystemBase{
 
         TargetSide side = null;
 
-        if (error > targetValue * accuracyThreshold) {
+        if (error > Math.abs(targetValue) * accuracyThreshold) {
             side = TargetSide.ABOVE;
-        } else if (error < -targetValue * accuracyThreshold) {
+        } else if (error < -Math.abs(targetValue) * accuracyThreshold) {
             side = TargetSide.BELOW;
         }
 

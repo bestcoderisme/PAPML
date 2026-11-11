@@ -9,7 +9,7 @@ import com.revrobotics.spark.SparkAbsoluteEncoder;
  * <p>The REV relative encoder reports position in rotations and velocity in RPM by default, so
  * this wrapper exposes those units directly.
  */
-public class AbsoluteREVEncoder implements Encoder {
+public class AbsoluteREVEncoder implements AbsoluteEncoder {
     private final SparkAbsoluteEncoder encoder;
 
     /**

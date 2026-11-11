@@ -8,7 +8,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
  * <p>Positions are reported in rotations. Phoenix 6 reports velocity in rotations per second,
  * so this wrapper converts to RPM for consistency with the {@link Encoder} interface.
  */
-public class AbsoluteCTREEncoder implements Encoder {
+public class AbsoluteCTREEncoder implements AbsoluteEncoder {
     private static final double SECONDS_PER_MINUTE = 60.0;
 
     private final CANcoder encoder;

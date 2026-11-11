@@ -8,7 +8,7 @@ import com.revrobotics.RelativeEncoder;
  * <p>The REV relative encoder reports position in rotations and velocity in RPM by default, so
  * this wrapper exposes those units directly.
  */
-public class RelativeREVEncoder implements Encoder {
+public class RelativeREVEncoder implements frc.robot.papml.abstraction.encoder.RelativeEncoder {
     private final RelativeEncoder encoder;
 
     /**
